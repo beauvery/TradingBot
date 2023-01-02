@@ -30,45 +30,46 @@ import csv
 # http://apps.twitter.com TO REGISTER FOR TOKEN DONT USE MINE !
 #http://all-hashtag.com/
 
-consumer_key= '' 
-consumer_secret= ''
+consumer_key= 'CwvJW5yKe29EC4akSnSp61gnt' 
+consumer_secret= 'mgsKIuCgwUppWYM2aRhwEgdrlOjtAuthPAvcpZgq7bheCAcuKW'
 
-access_token=''
-access_token_secret=''
+bearer_token='AAAAAAAAAAAAAAAAAAAAAAfZkwEAAAAAns3DdIkzE0X8t84rmxoK2NIC%2BmE%3DtKcS4l5jZFAz8V0Eawv1vjaiy49O3s1wzKGlBh29ReB3Jlr7nY'
+
+access_token='1502973603855446024-XBrq0Q3qof8TiYvBRKBFbIHkFZaoMX'
+access_token_secret='DotEoZOhsNaJV4ojLBITsWqXK1pSXwxsfrrfqodJfnq1s'
 
 # We set the above varibles to our API keys from TWITTER
 # Below we use the TWEEYP libary we imported to auth to twitter API
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
+
+client = tweepy.Client(bearer_token) #OAuth 2.0
+
 records = [] # store all of the records in this list
 
-# We grab symbol list from a pastebin
-url = 'https://pastebin.com/raw/U5h2LFbW' # They try stop us using it so we spoof our user agent below
-#Picking random useragent / telling user and setting below to use
-print("Grabing a random useragent from random useragent API....")
-userAgent = requests.get("http://labs.wis.nu/ua/") # grab the page / html
-randuserAgent = str(userAgent.content).replace('{',"").replace('}',"").replace('"ua"',"").replace("b':","").replace('"',"").replace(":","").replace('"',"").replace("'","")  # clean string, lol.... json...
-print(randuserAgent)#
-#
-headers = {'User-Agent': randuserAgent} # spoof user agent to stop the block 
-page = requests.get(url, headers=headers) # grab the page / html
-#print(page)
+#symbolList = page.content.decode().split("\n") # whacking the symbols into a list
+symbolList = ["GPB/CHF","USD/CHF"]
 
-symbolList = page.content.decode().split("\n") # whacking the symbols into a list
+def get_sentiment(text):
+    # Use TextBlob to analyze the sentiment of the text
+    analysis = TextBlob(text)
+    sentiment = analysis.sentiment.polarity
+
+    # Return the sentiment score on a scale from -1.0 to 1.0
+    return sentiment
 
 for symbol in symbolList: # illeterating threw out list   
-    symbol = symbol.replace("/","").replace("\n","")
-    #print(symbol)
-    #check for tiwtter sendiment
+    symbol = symbol.replace("/","")
+    print(symbol)
+    #check for tiwtter sentiment
     #Search for tweets
-    public_tweets = api.search("#" + symbol)# we use tweepy libary again to search for HASHTAG + NAME 
+    public_tweets = client.search_recent_tweets("#" + symbol) # we use tweepy libary again to search for HASHTAG + NAME 
 
     #Sentiment
     for tweet in public_tweets: # for every tweet we find mentioned...
-        text = tweet.text
-        cleanedtext = text	
-        analysis = TextBlob(cleanedtext) # break it into single words
+        
+        analysis = TextBlob(str(tweet)) # break it into single words
         sentiment = analysis.sentiment.polarity # work out sentiment
         if sentiment >= 0: # give it english
             polarity = 'Positive'
@@ -79,7 +80,7 @@ for symbol in symbolList: # illeterating threw out list
     floatstring = "%.9f" % sentiment
     record = '%s|%s|%s' % (symbol, floatstring, polarity) # get string ready for output file
     records.append(record)
-    print (symbol)
+    print(symbol)
     print("      |" + floatstring + "|" + polarity) # print to screen !!
 
 fl = codecs.open('outputForex-nimbusCapital.txt', 'wb', 'utf8') #store to output file
